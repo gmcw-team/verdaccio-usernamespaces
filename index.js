@@ -1,9 +1,10 @@
 const createError = require('http-errors');
+const get = require('lodash.get');
 
 class UserNamespacesPlugin {
   constructor(config, stuff) {
     this.logger = stuff.logger;
-    this.config = config;
+    this.matchPackagename = get(config, 'match-packagename', false);
   }
 
   allow_action(action) {
@@ -18,26 +19,30 @@ class UserNamespacesPlugin {
       const isOrgPackage = pkgFullName.startsWith('@');
       const orgEnd = pkgFullName.indexOf('/');
 
+      let pkgName;
+      let orgName;
+
       if (orgEnd > 0) {
-        const orgName = pkgFullName.slice(1, orgEnd);
-        const pkgName = pkgFullName.slice(orgEnd+1);
+        orgName = pkgFullName.slice(1, orgEnd);
+        pkgName = pkgFullName.slice(orgEnd+1);
       }
       else {
-        const pkgName = pkgFullName;
+        pkgName = pkgFullName;
+        orgName = null;
       }
 
       if (userName) {
-        if (pkg[action].includes('$usernamespace') && pkgName.startsWith(userName + ".")) {
+        if (pkg[action].includes('$usernamespace') && ((pkgName.startsWith(userName + ".") && this.matchPackagename) || (orgName == userName && !this.matchPackagename))) {
           return callback(null, true);
         }
         else {
-          return callback(createError(401, `authorization required to ${action} package ${pkg.name}`));
+          return callback(createError(401, `usernamespace required to ${action} package ${pkg.name}`));
         }
       }
       else {
-        return callback(createError(401, `authorization required to ${action} package ${pkg.name}`));
+        return callback(createError(401, `usernamespace required to ${action} package ${pkg.name}`));
       }
-    };
+    }.bind(this);
   }
 
   allow_access(user, pkg, callback) {
@@ -50,7 +55,7 @@ class UserNamespacesPlugin {
 
   allow_unpublish(user, pkg, callback) {
     const action = 'unpublish';
-    const isDefined = pkg[action] === null || pkg[action] === undefined;
+    const isDefined = pkg[action] !== null && pkg[action] !== undefined;
 
     const hasSupport = isDefined ? pkg[action] : false;
 

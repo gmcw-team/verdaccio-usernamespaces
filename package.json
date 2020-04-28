@@ -9,6 +9,7 @@
   "author": "Meseta",
   "license": "MIT",
   "dependencies": {
-    "http-errors": "^1.7.2"
+    "http-errors": "^1.7.2",
+    "lodash.get": "^4.4.2"
   }
 }
