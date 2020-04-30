@@ -39,7 +39,7 @@ class UserNamespacesPlugin {
 
       // now check for usernamespaces
       if (userName) {
-        if (pkg[action].includes('$usernamespace') && ((pkgName.startsWith(userName + ".") && this.matchPackagename) || (orgName == userName && !this.matchPackagename))) {
+        if (pkg[action].includes('$usernamespace') && ((pkgName.toLowerCase().startsWith(userName.toLowerCase() + ".") && this.matchPackagename) || (orgName === userName && !this.matchPackagename))) {
           return callback(null, true);
         }
         else {
