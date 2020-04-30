@@ -5,6 +5,7 @@ class UserNamespacesPlugin {
   constructor(config, stuff) {
     this.logger = stuff.logger;
     this.matchPackagename = get(config, 'match-packagename', false);
+    this.matchGroup = get(config, 'match-group', true);
   }
 
   allow_action(action) {
@@ -31,6 +32,12 @@ class UserNamespacesPlugin {
         orgName = null;
       }
 
+      // check group match (this is default behaviour for verdaccio)
+      if (this.matchGroup && pkg[action].some(group => userName === group || userGroups.includes(group))) {
+        return callback(null, true);
+      }
+
+      // now check for usernamespaces
       if (userName) {
         if (pkg[action].includes('$usernamespace') && ((pkgName.startsWith(userName + ".") && this.matchPackagename) || (orgName == userName && !this.matchPackagename))) {
           return callback(null, true);
@@ -39,9 +46,8 @@ class UserNamespacesPlugin {
           return callback(createError(401, `usernamespace required to ${action} package ${pkg.name}`));
         }
       }
-      else {
-        return callback(createError(401, `usernamespace required to ${action} package ${pkg.name}`));
-      }
+
+      return callback(createError(401, `no matching auth rules allowing user ${userName} to ${action} package ${pkg.name}`));
     }.bind(this);
   }
 
